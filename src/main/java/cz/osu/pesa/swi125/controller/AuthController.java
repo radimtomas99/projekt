@@ -7,7 +7,7 @@ import cz.osu.pesa.swi125.service.AuthService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-//test
+
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {

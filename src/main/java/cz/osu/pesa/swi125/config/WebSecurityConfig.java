@@ -24,4 +24,5 @@ public class WebSecurityConfig implements WebMvcConfigurer {
     public void addViewControllers(ViewControllerRegistry registry) {
         registry.addViewController("/").setViewName("forward:/index.html");
     }
+    //test radim
 }

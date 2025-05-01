@@ -10,7 +10,6 @@ function App() {
   return (
     <div className="App">
       <h1>Note Keeper</h1>
-        {users}
       <AddNote userId={userId} />
       <NoteList userId={userId} />
     </div>

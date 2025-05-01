@@ -4,6 +4,7 @@ https://nodejs.org/
 
 Instalace dependencí pro frontend
 
+cd projekt
 `.\make.ps1 install`
 
 
@@ -13,3 +14,5 @@ Udělat build front-endu:
 
 aplikace beží na:
 http://localhost:8081/
+
+//test

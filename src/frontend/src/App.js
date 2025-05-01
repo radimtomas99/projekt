@@ -7,8 +7,6 @@ function App() {
   const [userId, setUserId] = useState(1); // Například hardcodovaná ID uživatele, později to může být z autentifikace
 
 
-
-
   return (
     <div className="App">
       <h1>Note Keeper</h1>

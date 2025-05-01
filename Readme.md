@@ -4,6 +4,7 @@ https://nodejs.org/
 
 Instalace dependencí pro frontend
 
+cd projekt
 `.\make.ps1 install`
 
 

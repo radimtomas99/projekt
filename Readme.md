@@ -10,3 +10,6 @@ Instalace dependencí pro frontend
 Udělat build front-endu:
 
 `.\make.ps1 build-frontend`
+
+aplikace beží na:
+http://localhost:8081/

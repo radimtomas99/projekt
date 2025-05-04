@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {use, useState} from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const Register = ({ onSuccess }) => {
@@ -7,22 +7,25 @@ const Register = ({ onSuccess }) => {
     const navigate = useNavigate();
 
     const handleRegister = async () => {
+        const params = new URLSearchParams();
+        params.append('username', username);
+        params.append('password', password);
+
         try {
             const response = await fetch('http://localhost:8081/register', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ username, password })
+                body: params
             });
 
-            if (response.ok) {
-                const data = await response.json();
-                onSuccess(data.userId);
-                navigate('/notes');
-            } else {
-                throw new Error('Registrace selhala');
-            }
+            if (!response.ok) throw new Error('Registrace selhala');
+
+            // parse as text instead of JSON
+            const message = await response.text();
+            console.log("Server says:", message);
+
+            // since there is no userId in the response, call onSuccess with no args
+            onSuccess();
+            navigate('/notes');
         } catch (error) {
             console.error("Chyba při registraci:", error);
             alert("Registrace neproběhla úspěšně. Zkuste to znovu.");
@@ -30,7 +33,9 @@ const Register = ({ onSuccess }) => {
     };
 
 
-    return (
+    console.log(username)
+
+        return (
         <div>
             <h2>Register</h2>
             <input
@@ -48,6 +53,7 @@ const Register = ({ onSuccess }) => {
             <button onClick={handleRegister}>Register</button>
         </div>
     );
+
 };
 
 export default Register;

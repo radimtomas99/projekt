@@ -6,6 +6,7 @@ import cz.osu.pesa.swi125.model.repository.AppUserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -25,7 +26,7 @@ public class MainController {
         this.userRepo = userRepo;
     }
 
-    @GetMapping("/register")
+    @PostMapping("/register")
     public String register(@RequestParam String username, @RequestParam String password) {
         AppUser newUser = new AppUser();
         newUser.setUsername(username);

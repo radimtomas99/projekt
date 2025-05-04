@@ -24,7 +24,7 @@ public class AuthService {
             user.setPassword(password);  // Tady budeš chtít použít šifrování hesla
             user.setRole(Role.USER);
 
-            userRepository.save(user);
+//            userRepository.save(user);
             ret = "User successfully registered!";
         }
         return ret;

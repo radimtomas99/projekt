@@ -5,12 +5,17 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-// test gitu
+
 @Configuration
 public class WebSecurityConfig implements WebMvcConfigurer {
+
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**");
+        registry.addMapping("/**")
+                .allowedOrigins("http://localhost:3000")  // URL pro frontend
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")  // Povolené metody
+                .allowedHeaders("*")  // Povolit všechny hlavičky
+                .allowCredentials(true);  // Umožnit přihlašování
     }
 
     @Override
@@ -24,5 +29,4 @@ public class WebSecurityConfig implements WebMvcConfigurer {
     public void addViewControllers(ViewControllerRegistry registry) {
         registry.addViewController("/").setViewName("forward:/index.html");
     }
-    //test radim
 }

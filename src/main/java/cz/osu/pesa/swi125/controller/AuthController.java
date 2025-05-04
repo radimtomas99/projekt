@@ -2,6 +2,7 @@ package cz.osu.pesa.swi125.controller;
 
 import cz.osu.pesa.swi125.model.dto.LoginRequest;
 import cz.osu.pesa.swi125.model.dto.RegistrationRequest;
+import cz.osu.pesa.swi125.model.dto.RegistrationResponse;
 import cz.osu.pesa.swi125.model.dto.UserToken;
 import cz.osu.pesa.swi125.service.AuthService;
 import org.springframework.http.HttpStatus;
@@ -11,18 +12,23 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+
     private final AuthService authService;
 
     public AuthController(AuthService authService) {
         this.authService = authService;
     }
 
-    @RequestMapping(value = "/register", produces = "application/json", method = RequestMethod.POST)
-    public ResponseEntity<String> register(@RequestBody RegistrationRequest registrationDTO) {
-        System.out.println("Here");
+    @PostMapping("/register")
+    public ResponseEntity<RegistrationResponse> register(@RequestBody RegistrationRequest registrationDTO) {
         String ret = authService.register(registrationDTO.getUsername(), registrationDTO.getPassword());
 
-        return new ResponseEntity<>(ret, HttpStatus.OK);
+        if ("User successfully registered!".equals(ret)) {
+            return ResponseEntity.ok(new RegistrationResponse("User successfully registered!"));
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new RegistrationResponse("Registration failed"));
+        }
     }
 
     @PostMapping("/login")

@@ -15,4 +15,3 @@ Udělat build front-endu:
 aplikace beží na:
 http://localhost:8081/
 
-//test

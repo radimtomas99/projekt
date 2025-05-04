@@ -1,24 +1,52 @@
-// NotesPage.jsx
-import { useEffect, useState } from "react";
-import api from "../services/api"; // Cesta k souboru podle struktury
+import { useState, useEffect } from 'react';
 
 const NotesPage = () => {
   const [notes, setNotes] = useState([]);
+  const [newNote, setNewNote] = useState('');
 
   useEffect(() => {
-    api.get("/notes?userId=1")
-      .then((res) => setNotes(res.data))
-      .catch((err) => console.error("Chyba při načítání poznámek:", err));
+    // Načteme existující poznámky
+    const fetchNotes = async () => {
+      const response = await fetch('http://localhost:8081/notes');
+      const data = await response.json();
+      setNotes(data);
+    };
+
+    fetchNotes();
   }, []);
 
+  const handleAddNote = async () => {
+    const response = await fetch('http://localhost:8081/notes/add', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ content: newNote })
+    });
+
+    if (response.ok) {
+      const addedNote = await response.json();
+      setNotes([...notes, addedNote]);
+      setNewNote('');
+    }
+  };
+
   return (
-    <div>
-      <h1>Moje poznámky</h1>
-      {notes.map((note) => (
-        <div key={note.id}>{note.title}</div>
-      ))}
-    </div>
+      <div>
+        <h2>Your Notes</h2>
+        <textarea
+            value={newNote}
+            onChange={(e) => setNewNote(e.target.value)}
+            placeholder="Write your note here..."
+        />
+        <button onClick={handleAddNote}>Add Note</button>
+        <ul>
+          {notes.map(note => (
+              <li key={note.id}>{note.content}</li>
+          ))}
+        </ul>
+      </div>
   );
-};
+}
 
 export default NotesPage;

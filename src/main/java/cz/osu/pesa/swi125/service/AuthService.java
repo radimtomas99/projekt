@@ -21,8 +21,7 @@ public class AuthService {
         } else {
             AppUser user = new AppUser();
             user.setUsername(username);
-            // Tady by bylo šifrování hesla (např. BCrypt, přidání soli apod.)
-            user.setPassword(password);
+            user.setPassword(password);  // Tady budeš chtít použít šifrování hesla
             user.setRole(Role.USER);
 
             userRepository.save(user);

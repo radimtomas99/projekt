@@ -18,12 +18,10 @@ const Register = ({ onSuccess }) => {
             });
 
             if (!response.ok) throw new Error('Registrace selhala');
-
-            // parse as text instead of JSON
+            
             const message = await response.text();
             console.log("Server says:", message);
 
-            // since there is no userId in the response, call onSuccess with no args
             onSuccess();
             navigate('/notes');
         } catch (error) {
@@ -31,9 +29,6 @@ const Register = ({ onSuccess }) => {
             alert("Registrace neproběhla úspěšně. Zkuste to znovu.");
         }
     };
-
-
-    console.log(username)
 
         return (
         <div>

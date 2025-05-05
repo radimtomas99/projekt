@@ -1,4 +1,21 @@
-import { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import AddNote from './AddNote';
+import NoteList from './NoteList';
+
+const NotesPage = () => {
+    return (
+        <div>
+            <h1>Your Notes</h1>
+            <AddNote />
+            <NoteList />
+        </div>
+    );
+};
+
+export default NotesPage;
+
+
+/*import { useState, useEffect } from 'react';
 
 const NotesPage = () => {
   const [notes, setNotes] = useState([]);
@@ -50,3 +67,4 @@ const NotesPage = () => {
 }
 
 export default NotesPage;
+*/

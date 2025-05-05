@@ -1,5 +1,35 @@
 package cz.osu.pesa.swi125.service;
 
+import cz.osu.pesa.swi125.model.entity.AppUser;
+import cz.osu.pesa.swi125.model.entity.Note;
+import cz.osu.pesa.swi125.model.repository.NoteRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class NoteService {
+
+    private final NoteRepository noteRepository;
+
+    @Autowired
+    public NoteService(NoteRepository noteRepository) {
+        this.noteRepository = noteRepository;
+    }
+
+    public Note addNote(Note note) {
+        return noteRepository.save(note);
+    }
+
+    public List<Note> getNotesByUser(AppUser user) {
+        return noteRepository.findByUser(user);
+    }
+}
+
+/*
+package cz.osu.pesa.swi125.service;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import cz.osu.pesa.swi125.model.entity.Note;
 import cz.osu.pesa.swi125.model.repository.NoteRepository;
@@ -27,4 +57,4 @@ public class NoteService {
         return noteRepository.findAll();
     }
 }
-
+*/

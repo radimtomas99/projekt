@@ -1,16 +1,53 @@
 package cz.osu.pesa.swi125.model.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-
+import jakarta.persistence.*;
 
 @Entity
+    public class Note {
 
-public class Note {
+        @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        private Long id;
 
-    @Id
+        @ManyToOne(fetch = FetchType.LAZY)
+        @JoinColumn(name = "user_id", nullable = false)
+        private AppUser user;
+
+        private String content;
+
+        public Note() {
+        }
+
+        public Note(AppUser user, String content) {
+            this.user = user;
+            this.content = content;
+        }
+
+        public Long getId() {
+            return id;
+        }
+
+        public void setId(Long id) {
+            this.id = id;
+        }
+
+        public AppUser getUser() {
+            return user;
+        }
+
+        public void setUser(AppUser user) {
+            this.user = user;
+        }
+
+        public String getContent() {
+            return content;
+        }
+
+        public void setContent(String content) {
+            this.content = content;
+        }
+    }
+   /* @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private Long userId;
@@ -20,7 +57,7 @@ public class Note {
     public Note() {}
 
     // Konstruktor s parametry
-    public Note(Long userId, String content) {
+    public Note (Long userId, String content) {
         this.userId = userId;
         this.content = content;
     }
@@ -50,3 +87,4 @@ public class Note {
         this.content = content;
     }
 }
+*/

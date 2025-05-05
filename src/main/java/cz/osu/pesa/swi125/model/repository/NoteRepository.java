@@ -1,5 +1,18 @@
 package cz.osu.pesa.swi125.model.repository;
 
+import cz.osu.pesa.swi125.model.entity.AppUser;
+import cz.osu.pesa.swi125.model.entity.Note;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+
+public interface NoteRepository extends JpaRepository<Note, Long> {
+    List<Note> findByUser(AppUser user);
+}
+
+
+/*package cz.osu.pesa.swi125.model.repository;
+
 import cz.osu.pesa.swi125.model.entity.Note;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -11,4 +24,4 @@ public interface NoteRepository extends JpaRepository<Note, Long> {
     // Můžeš přidat vlastní dotazy, např. pro získání poznámek podle uživatele
     List<Note> findByUserId(Long userId);
 }
-
+*/

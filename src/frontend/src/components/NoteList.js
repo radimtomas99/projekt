@@ -1,4 +1,31 @@
 import React, { useEffect, useState } from 'react';
+import api from '../services/api';
+
+const NoteList = () => {
+    const [notes, setNotes] = useState([]);
+
+    useEffect(() => {
+        api.get('/notes')
+            .then(response => setNotes(response.data))
+            .catch(error => console.error('Error fetching notes:', error));
+    }, []);
+
+    return (
+        <div>
+            <h2>My Notes</h2>
+            <ul>
+                {notes.map(note => (
+                    <li key={note.id}>{note.content}</li>
+                ))}
+            </ul>
+        </div>
+    );
+};
+
+export default NoteList;
+
+
+/*import React, { useEffect, useState } from 'react';
 import api from '../services/api'; // místo axios
 
 const NoteList = ({ userId }) => {
@@ -26,3 +53,4 @@ const NoteList = ({ userId }) => {
 };
 
 export default NoteList;
+*/

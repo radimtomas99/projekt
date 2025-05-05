@@ -6,15 +6,21 @@ import cz.osu.pesa.swi125.model.dto.FolderDto;
 import cz.osu.pesa.swi125.service.FileSystemService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api/filesystem")
@@ -167,6 +173,50 @@ public class FileSystemController {
             log.error("Unexpected error deleting file {} for userId {}: {}", fileId, userId, e.getMessage(), e);
              return new ResponseEntity<>(new ErrorResponse("Failed to delete file due to an unexpected error."), HttpStatus.INTERNAL_SERVER_ERROR);
          }
+    }
+
+    // --- Get File Content Endpoint ---
+    @GetMapping("/files/{fileId}/content")
+    public ResponseEntity<?> getFileContent(@PathVariable Integer fileId,
+                                            @RequestParam Integer userId,
+                                            HttpServletRequest request) { // Inject request to determine content type
+        log.info("Request to get content for fileId: {} for userId: {}", fileId, userId);
+         if (userId == null || fileId == null) {
+             return new ResponseEntity<>(new ErrorResponse("userId and fileId parameters are required"), HttpStatus.BAD_REQUEST);
+         }
+        try {
+            Resource resource = fileSystemService.loadFileAsResource(fileId, userId);
+
+            // Try to determine file's content type
+            String contentType = null;
+            try {
+                contentType = request.getServletContext().getMimeType(resource.getFile().getAbsolutePath());
+            } catch (IOException ex) {
+                log.warn("Could not determine file type for resource: {}", resource.getFilename());
+            }
+
+            // Fallback to the default content type if type could not be determined
+            if(contentType == null) {
+                contentType = "application/octet-stream";
+            }
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    // Optional: Add header to suggest filename for download
+                    // .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + resource.getFilename() + "\"") // Suggest inline display
+                    .body(resource);
+                    
+        } catch (IllegalArgumentException e) {
+            log.warn("Bad request getting file content: {}", e.getMessage());
+            return new ResponseEntity<>(new ErrorResponse(e.getMessage()), HttpStatus.BAD_REQUEST); // Could be 404 Not Found
+        } catch (RuntimeException | MalformedURLException e) { // Catch RuntimeException from service (file not readable)
+             log.error("Error reading file resource {} for userId {}: {}", fileId, userId, e.getMessage(), e);
+             return new ResponseEntity<>(new ErrorResponse("Could not read file: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e) {
+            log.error("Unexpected error getting file content {} for userId {}: {}", fileId, userId, e.getMessage(), e);
+            return new ResponseEntity<>(new ErrorResponse("Failed to get file content due to an unexpected error."), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
 } 

@@ -11,12 +11,15 @@ import cz.osu.pesa.swi125.model.repository.FolderRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -244,6 +247,29 @@ public class FileSystemService {
             throw new IllegalArgumentException("User does not have permission to access file ID: " + fileId);
         }
         return file;
+    }
+
+    // --- Load File as Resource --- 
+    public Resource loadFileAsResource(Integer fileId, Integer userId) throws MalformedURLException {
+        AppUser user = getUserByUserId(userId);
+        FileEntity fileEntity = getFileByIdAndUser(fileId, user);
+
+        // Construct physical path
+        Path userFolder = this.rootFileStorageLocation.resolve(String.valueOf(user.getUserId()));
+        Path targetFolder = userFolder.resolve(String.valueOf(fileEntity.getFolder().getFolderId()));
+        String fileExtension = StringUtils.getFilenameExtension(fileEntity.getFileName());
+        String physicalFilename = fileId + (fileExtension != null ? "." + fileExtension : "");
+        Path filePath = targetFolder.resolve(physicalFilename).normalize();
+
+        log.info("Attempting to load file resource: {}", filePath);
+
+        Resource resource = new UrlResource(filePath.toUri());
+        if(resource.exists() && resource.isReadable()) {
+            return resource;
+        } else {
+             log.error("File resource not found or not readable: {}", filePath);
+            throw new RuntimeException("Could not read file: " + fileEntity.getFileName());
+        }
     }
 
     // --- DTO Converters ---

@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
     Container, Row, Col, Card, Button, 
-    Form, InputGroup, Alert, Spinner, Breadcrumb, ListGroup
+    Form, InputGroup, Alert, Spinner, Breadcrumb, ListGroup, Modal
 } from 'react-bootstrap';
 
 // Import icons (using react-bootstrap-icons for example)
 // You might need to install it: npm install react-bootstrap-icons
-import { FolderFill, FileEarmarkText, FileEarmarkImage, FileEarmarkPdf, QuestionCircle, Trash } from 'react-bootstrap-icons';
+import { FolderFill, FileEarmarkText, FileEarmarkImage, FileEarmarkPdf, QuestionCircle, Trash, BoxArrowUp, ArrowLeft } from 'react-bootstrap-icons';
 
 const FileSystemPage = ({ userId }) => {
     const [folders, setFolders] = useState([]);
@@ -23,10 +23,15 @@ const FileSystemPage = ({ userId }) => {
     const [error, setError] = useState(null);
     const fileInputRef = useRef(null); // Ref for file input
 
+    const [viewingFile, setViewingFile] = useState(null); // { fileId: ..., fileName: ..., fileType: ... }
+    const [fileContent, setFileContent] = useState(null);
+    const [fileContentLoading, setFileContentLoading] = useState(false);
+    const [fileContentError, setFileContentError] = useState(null);
+
     const API_BASE = '/api/filesystem'; // Base API path
 
     // Fetch Folders
-    const fetchFolders = async () => {
+    const fetchFolders = useCallback(async () => {
         setIsLoadingFolders(true);
         setError(null);
         try {
@@ -39,10 +44,10 @@ const FileSystemPage = ({ userId }) => {
         } finally {
             setIsLoadingFolders(false);
         }
-    };
+    }, [userId]);
 
     // Fetch Files for selected folder
-    const fetchFiles = async (folderId) => {
+    const fetchFiles = useCallback(async (folderId) => {
         setIsLoadingFiles(true);
         setError(null);
         try {
@@ -56,12 +61,12 @@ const FileSystemPage = ({ userId }) => {
         } finally {
             setIsLoadingFiles(false);
         }
-    };
+    }, [userId]);
 
     // Fetch folders on component mount
     useEffect(() => {
         fetchFolders();
-    }, [userId]); // Re-fetch if userId changes (though it shouldn't in this setup)
+    }, [fetchFolders]); // Re-fetch if userId changes (though it shouldn't in this setup)
 
     // Handle selecting a folder
     const handleFolderSelect = (folderId, folderName) => {
@@ -212,6 +217,100 @@ const FileSystemPage = ({ userId }) => {
         }
     };
 
+    // --- File Viewer Functions ---
+    const handleFileClick = (file) => {
+        console.log("Opening file viewer for:", file);
+        setViewingFile(file);
+        // Reset previous content state
+        setFileContent(null);
+        setFileContentLoading(false);
+        setFileContentError(null);
+
+        // Fetch content immediately if it's a text file
+        if (file.fileType === 'text/plain') {
+            fetchTextFileContent(file.fileId);
+        }
+    };
+
+    const handleCloseViewer = () => {
+        console.log("Closing file viewer");
+        setViewingFile(null);
+         // Reset content state on close
+        setFileContent(null);
+        setFileContentLoading(false);
+        setFileContentError(null);
+    };
+
+    const fetchTextFileContent = async (fileId) => {
+        setFileContentLoading(true);
+        setFileContentError(null);
+        console.log(`Fetching text content for fileId: ${fileId}, userId: ${userId}`);
+        try {
+            const response = await fetch(`/api/filesystem/files/${fileId}/content?userId=${userId}`, {
+                 headers: {
+                     'Accept': 'text/plain', // Explicitly request text
+                 }
+             });
+            if (!response.ok) {
+                const errorData = await response.text(); // Get text error for debugging
+                console.error("Error fetching text content:", response.status, errorData);
+                throw new Error(`Failed to fetch file content: ${response.status}`);
+            }
+            const textContent = await response.text();
+            setFileContent(textContent);
+        } catch (err) {
+            console.error("Error fetching text content:", err);
+            setFileContentError(err.message || 'Could not load file content.');
+        } finally {
+            setFileContentLoading(false);
+        }
+    };
+    // --- End File Viewer Functions ---
+
+    // Construct file URL for viewer (images, pdf)
+    const getFileViewerUrl = (fileId) => {
+        if (!fileId || !userId) return null;
+        return `/api/filesystem/files/${fileId}/content?userId=${userId}`;
+    };
+
+    // Render Full Screen Viewer if a file is being viewed
+    if (viewingFile) {
+        const fileUrl = getFileViewerUrl(viewingFile.fileId);
+        return (
+            <div className="file-viewer-fullscreen">
+                <div className="file-viewer-top-bar">
+                    <Button variant="light" onClick={handleCloseViewer} className="me-3">
+                        <ArrowLeft size={20} /> Back
+                    </Button>
+                    <span className="file-viewer-filename text-truncate">{viewingFile.fileName}</span>
+                </div>
+                <div className="file-viewer-content">
+                    {(() => {
+                        switch (viewingFile.fileType) {
+                            case 'image/jpeg':
+                            case 'image/png':
+                                return <img src={fileUrl} alt={viewingFile.fileName} className="file-viewer-image" />;
+                            case 'application/pdf':
+                                // Use iframe for potentially better browser compatibility and controls
+                                return <iframe src={fileUrl} className="file-viewer-iframe" title={viewingFile.fileName} />;
+                            case 'text/plain':
+                                if (fileContentLoading) {
+                                    return <div className="text-center p-5"><Spinner animation="border" /></div>;
+                                }
+                                if (fileContentError) {
+                                    return <Alert variant="danger" className="m-3">Error loading content: {fileContentError}</Alert>;
+                                }
+                                return <pre className="file-viewer-text">{fileContent}</pre>;
+                            default:
+                                return <Alert variant="info" className="m-3">Preview not available for this file type ({viewingFile.fileType}).</Alert>;
+                        }
+                    })()}
+                </div>
+            </div>
+        );
+    }
+
+    // Render Folder/File Grid View if no file is being viewed
     return (
         <Container className="py-4 mt-3">
             <Row className="justify-content-center">
@@ -273,18 +372,22 @@ const FileSystemPage = ({ userId }) => {
                                 {/* Display Files */} 
                                 {currentFolderId !== null && !isLoadingFiles && files.map(file => (
                                     <Col key={file.fileId}>
-                                        <Card className="text-center h-100 position-relative">
+                                        {/* Make the whole card clickable */}
+                                        <Card 
+                                            className="text-center h-100 position-relative clickable-card" // Add clickable class
+                                            onClick={() => handleFileClick(file)} // Add onClick handler
+                                        > 
                                             <Card.Body className="d-flex flex-column justify-content-center align-items-center p-2 pt-3">
                                                 <GetFileIcon fileType={file.fileType} />
                                                 <small className="text-break mb-2">{file.fileName}</small>
-                                                 {/* Add download/view buttons later */}
+                                                 {/* Removed view button - whole card is clickable now */}
                                             </Card.Body>
                                             {/* Delete Button */} 
                                             <Button 
                                                 variant="danger" 
                                                 size="sm" 
                                                 className="position-absolute top-0 end-0 m-1 delete-button" 
-                                                onClick={(e) => { e.stopPropagation(); handleDeleteFile(file.fileId, file.fileName); }}
+                                                onClick={(e) => { e.stopPropagation(); handleDeleteFile(file.fileId, file.fileName); }} // Stop propagation to prevent card click triggering modal
                                                 disabled={isDeleting === file.fileId}
                                             >
                                                  {isDeleting === file.fileId ? <Spinner size="sm" animation="border"/> : <Trash size={14}/>}
@@ -340,5 +443,98 @@ const FileSystemPage = ({ userId }) => {
         </Container>
     );
 };
+
+// Add CSS for clickable card
+const style = document.createElement('style');
+style.textContent = `
+    .clickable-card {
+        cursor: pointer;
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    .clickable-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .delete-button {
+        /* Ensure delete button is clickable even with card hover effect */
+        z-index: 2; 
+    }
+    .folder-card .delete-button, .file-card .delete-button {
+         opacity: 0.7; /* Make delete less prominent initially */
+         transition: opacity 0.2s ease-in-out;
+    }
+     .folder-card:hover .delete-button, .file-card:hover .delete-button {
+         opacity: 1; /* Show delete button clearly on hover */
+    }
+
+    /* Full Screen Viewer Styles */
+    .file-viewer-fullscreen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: #f8f9fa; /* Light background */
+        z-index: 1050; /* Ensure it's above other content */
+        display: flex;
+        flex-direction: column;
+    }
+    .file-viewer-top-bar {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1.5rem;
+        background-color: #e9ecef; /* Slightly darker bar */
+        border-bottom: 1px solid #dee2e6;
+        flex-shrink: 0; /* Prevent bar from shrinking */
+    }
+    .file-viewer-filename {
+        font-weight: 500;
+        font-size: 1.1rem;
+        margin-left: 1rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .file-viewer-content {
+        flex-grow: 1; /* Allow content to fill remaining space */
+        overflow: auto; /* Add scrollbars if content overflows */
+        text-align: center; /* Center images/iframes initially */
+        padding: 1rem; /* Add padding around content */
+        display: flex; /* Use flex for centering */
+        justify-content: center;
+        align-items: center;
+    }
+    .file-viewer-image {
+        max-width: 100%;
+        max-height: calc(100vh - 80px); /* Adjust based on top bar height + padding */
+        object-fit: contain;
+        display: block; /* Remove extra space below image */
+        margin: auto; /* Center image if smaller than container */
+    }
+    .file-viewer-iframe {
+        width: 95%; /* Take most of the width */
+        height: calc(100vh - 80px); /* Adjust height */
+        border: none;
+        display: block; /* Remove extra space */
+        margin: auto; /* Center iframe */
+    }
+    .file-viewer-text {
+        white-space: pre-wrap;
+        word-break: break-all;
+        text-align: left;
+        max-width: 100%;
+        height: 100%; /* Fill the content area */
+        overflow-y: auto;
+        background-color: #fff; /* White background for text */
+        padding: 1rem;
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+        box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+        margin: 0 auto; /* Center the pre block */
+        width: 90%; /* Constrain width slightly */
+    }
+
+`;
+document.head.append(style);
 
 export default FileSystemPage; 

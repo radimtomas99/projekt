@@ -34,3 +34,6 @@ build/
 .vscode/
 
 src/main/resources/static/*
+
+# User uploaded content - DO NOT COMMIT
+/userData/

@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 // Removed router imports
 // import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'; 
 import Register from './components/Register';
-import NotesPage from './components/NotesPage';
+// Removed NotesPage import
+// import NotesPage from './components/NotesPage'; 
 import Login from './components/Login';
 import SchedulePage from './components/SchedulePage';
+import FileSystemPage from './components/FileSystemPage'; // Import FileSystemPage
 import NavbarComponent from './components/NavbarComponent';
 import './App.css';
 
@@ -13,7 +15,7 @@ import './App.css';
 function App() {
     // Use userId state instead of authToken
     const [currentUserId, setCurrentUserId] = useState(null); 
-    // Re-introduce currentView state: 'login', 'register', 'notes', 'schedule'
+    // Set default view for logged in users to 'filesystem'
     const [currentView, setCurrentView] = useState('login'); 
 
     // Check localStorage on initial load and set initial view
@@ -22,7 +24,8 @@ function App() {
         const storedUserId = localStorage.getItem('currentUserId'); 
         if (storedUserId) {
             setCurrentUserId(parseInt(storedUserId, 10)); // Parse userId back to integer
-            setCurrentView('notes'); 
+            // Set default logged-in view
+            setCurrentView('filesystem'); 
         } else {
             setCurrentView('login'); 
         }
@@ -32,7 +35,8 @@ function App() {
         // Store userId in localStorage
         localStorage.setItem('currentUserId', userId); 
         setCurrentUserId(userId);
-        setCurrentView('notes'); 
+        // Navigate to file system after login
+        setCurrentView('filesystem'); 
     };
 
     const handleRegistrationSuccess = () => {
@@ -47,8 +51,8 @@ function App() {
         setCurrentView('login'); 
     };
 
-    // Navigation handlers to pass to Navbar
-    const navigateToNotes = () => setCurrentView('notes');
+    // Renamed navigateToNotes to navigateToFilesystem
+    const navigateToFilesystem = () => setCurrentView('filesystem');
     const navigateToSchedule = () => setCurrentView('schedule');
     const navigateToLogin = () => setCurrentView('login');
     const navigateToRegister = () => setCurrentView('register');
@@ -66,13 +70,14 @@ function App() {
             }
         }
 
-        // Pass currentUserId if needed by child components
+        // Render FileSystemPage or SchedulePage when logged in
         switch (currentView) {
             case 'schedule':
-                return <SchedulePage /* userId={currentUserId} */ />; // Pass userId if needed
-            case 'notes':
+                return <SchedulePage userId={currentUserId} />;
+            case 'filesystem': // Changed from 'notes'
             default: 
-                return <NotesPage /* userId={currentUserId} */ />; // Pass userId if needed
+                // Pass userId to FileSystemPage
+                return <FileSystemPage userId={currentUserId} />; 
         }
     };
 
@@ -83,7 +88,7 @@ function App() {
                 isLoggedIn={!!currentUserId} // Update isLoggedIn check
                 currentView={currentView}
                 onLogout={handleLogout}
-                onNavigateToNotes={navigateToNotes}
+                onNavigateToFilesystem={navigateToFilesystem} // Pass renamed handler
                 onNavigateToSchedule={navigateToSchedule}
                 onNavigateToLogin={navigateToLogin}
                 onNavigateToRegister={navigateToRegister}

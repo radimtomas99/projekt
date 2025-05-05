@@ -6,7 +6,7 @@ const NavbarComponent = ({
     isLoggedIn, 
     currentView, // To disable link for current view
     onLogout, 
-    onNavigateToNotes, 
+    onNavigateToFilesystem, // Renamed prop
     onNavigateToSchedule, 
     onNavigateToLogin, 
     onNavigateToRegister
@@ -21,7 +21,7 @@ const NavbarComponent = ({
         <Navbar bg="light" expand="lg" className="mb-4 shadow-sm">
             <Container>
                 <Navbar.Brand 
-                    onClick={isLoggedIn ? onNavigateToNotes : onNavigateToLogin}
+                    onClick={isLoggedIn ? onNavigateToFilesystem : onNavigateToLogin}
                     style={{ cursor: 'pointer' }} // Make brand clickable
                 >
                     Note Keeper
@@ -32,10 +32,10 @@ const NavbarComponent = ({
                         {isLoggedIn && (
                             <>
                                 <Nav.Link 
-                                    onClick={onNavigateToNotes} 
-                                    disabled={currentView === 'notes'} // Disable if already on notes
+                                    onClick={onNavigateToFilesystem} // Use renamed prop
+                                    disabled={currentView === 'filesystem'} // Check against 'filesystem'
                                 >
-                                    My Notes
+                                    My Files
                                 </Nav.Link>
                                 <Nav.Link 
                                     onClick={onNavigateToSchedule} 

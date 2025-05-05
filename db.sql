@@ -59,3 +59,39 @@ CREATE TABLE schedule_event (
 
 ALTER TABLE public.schedule_event
     OWNER TO tvuj_username;
+
+-- ==============================
+-- File System Tables
+-- ==============================
+
+-- Folders Table
+DROP TABLE IF EXISTS folders CASCADE;
+CREATE TABLE folders (
+    folder_id SERIAL PRIMARY KEY,
+    folder_name VARCHAR(100) NOT NULL,
+    user_id INTEGER NOT NULL,
+    CONSTRAINT fk_folder_user
+        FOREIGN KEY(user_id) 
+        REFERENCES app_user(user_id)
+        ON DELETE CASCADE
+);
+ALTER TABLE public.folders OWNER TO tvuj_username;
+
+-- Files Table
+DROP TABLE IF EXISTS files CASCADE;
+CREATE TABLE files (
+    file_id SERIAL PRIMARY KEY,
+    file_name VARCHAR(255) NOT NULL, -- Original filename
+    file_type VARCHAR(100) NOT NULL, -- Mime type (e.g., application/pdf, text/plain)
+    user_id INTEGER NOT NULL,
+    folder_id INTEGER NOT NULL,
+    CONSTRAINT fk_file_user
+        FOREIGN KEY(user_id) 
+        REFERENCES app_user(user_id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_file_folder
+        FOREIGN KEY(folder_id) 
+        REFERENCES folders(folder_id)
+        ON DELETE CASCADE
+);
+ALTER TABLE public.files OWNER TO tvuj_username;

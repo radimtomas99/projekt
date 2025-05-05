@@ -1,5 +1,6 @@
 package cz.osu.pesa.swi125.service;
 
+import cz.osu.pesa.swi125.model.dto.AddScheduleEventRequest;
 import cz.osu.pesa.swi125.model.dto.ScheduleEventDto;
 import cz.osu.pesa.swi125.model.entity.AppUser;
 import cz.osu.pesa.swi125.model.entity.ScheduleEvent;
@@ -11,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,34 +27,37 @@ public class ScheduleEventService {
     }
 
     @Transactional
-    public ScheduleEventDto addEvent(ScheduleEventDto eventDto, String username) {
-        AppUser user = userRepository.findByUsername(username);
-        if (user == null) {
-            throw new IllegalArgumentException("User not found");
+    public ScheduleEventDto addEvent(AddScheduleEventRequest eventRequest) {
+        if (eventRequest.getUserId() == null) {
+             throw new IllegalArgumentException("User ID must be provided to add an event.");
         }
+        
+        AppUser user = userRepository.findById(eventRequest.getUserId())
+            .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + eventRequest.getUserId()));
 
-        // Basic validation
-        if (eventDto.getEventDate() == null || eventDto.getEventName() == null || eventDto.getEventName().trim().isEmpty() ||
-            eventDto.getEventColor() == null || eventDto.getEventColor().trim().isEmpty()) {
+        if (eventRequest.getEventDate() == null || eventRequest.getEventName() == null || eventRequest.getEventName().trim().isEmpty() ||
+            eventRequest.getEventColor() == null || eventRequest.getEventColor().trim().isEmpty()) {
             throw new IllegalArgumentException("Event date, name, and color cannot be empty");
         }
 
         ScheduleEvent event = new ScheduleEvent();
         event.setUser(user);
-        event.setEventDate(eventDto.getEventDate());
-        event.setEventName(eventDto.getEventName().trim());
-        event.setEventColor(eventDto.getEventColor().trim());
+        event.setEventDate(eventRequest.getEventDate());
+        event.setEventName(eventRequest.getEventName().trim());
+        event.setEventColor(eventRequest.getEventColor().trim());
 
         ScheduleEvent savedEvent = eventRepository.save(event);
         return convertToDto(savedEvent);
     }
 
     @Transactional(readOnly = true)
-    public List<ScheduleEventDto> getEventsForMonth(String username, int year, int month) {
-        AppUser user = userRepository.findByUsername(username);
-        if (user == null) {
-            throw new IllegalArgumentException("User not found");
-        }
+    public List<ScheduleEventDto> getEventsForMonth(Integer userId, int year, int month) {
+         if (userId == null) {
+             throw new IllegalArgumentException("User ID must be provided to get events.");
+         }
+         
+        AppUser user = userRepository.findById(userId)
+             .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
 
         YearMonth yearMonth = YearMonth.of(year, month);
         LocalDate startDate = yearMonth.atDay(1);
@@ -64,7 +69,6 @@ public class ScheduleEventService {
                      .collect(Collectors.toList());
     }
     
-    // Helper method to convert Entity to DTO
     private ScheduleEventDto convertToDto(ScheduleEvent event) {
         return new ScheduleEventDto(
             event.getEventId(),

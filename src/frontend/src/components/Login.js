@@ -37,17 +37,15 @@ const Login = ({ onSuccess }) => {
                 throw new Error(errorMessage);
             }
 
-            // Assuming successful login returns a token in the JSON response (e.g., data.token)
-            // Adjust data.token based on your actual backend UserToken DTO structure
-            const token = data.token || (data.username ? `token-for-${data.username}` : null); // Extract token or relevant data
+            // Extract userId from the response data
+            const userId = data.userId; 
             
-            if (!token) {
-                // Handle case where backend returns OK but no token (shouldn't happen with current backend setup)
-                throw new Error('Login successful, but no token received from server.');
+            if (!userId) {
+                throw new Error('Login successful, but no userId received from server.');
             }
 
-            console.log('Backend login successful, token:', token);
-            onSuccess(token); // Pass token back to App.js
+            console.log('Backend login successful, userId:', userId);
+            onSuccess(userId); // Pass userId back to App.js
 
         } catch (err) {
             console.error("Login fetch error:", err);

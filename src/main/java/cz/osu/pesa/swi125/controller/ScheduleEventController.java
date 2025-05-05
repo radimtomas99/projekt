@@ -1,5 +1,6 @@
 package cz.osu.pesa.swi125.controller;
 
+import cz.osu.pesa.swi125.model.dto.AddScheduleEventRequest;
 import cz.osu.pesa.swi125.model.dto.ErrorResponse;
 import cz.osu.pesa.swi125.model.dto.ScheduleEventDto;
 import cz.osu.pesa.swi125.service.ScheduleEventService;
@@ -22,18 +23,12 @@ public class ScheduleEventController {
         this.eventService = eventService;
     }
 
-    // Removed Principal parameter
     @PostMapping("/events")
-    public ResponseEntity<?> addEvent(@RequestBody ScheduleEventDto eventDto) {
-        String username = null; // Placeholder - This needs to be resolved!
-        if (username == null) { 
-            // Returning error until user identification is handled
-            return new ResponseEntity<>(new ErrorResponse("User identification missing in request"), HttpStatus.UNAUTHORIZED); 
-        }
-
+    // Accept AddScheduleEventRequest which includes userId
+    public ResponseEntity<?> addEvent(@RequestBody AddScheduleEventRequest eventRequest) { 
         try {
-             // This call will likely fail now as username is null or needs to be obtained differently
-            ScheduleEventDto savedEvent = eventService.addEvent(eventDto, username); 
+            // Service now expects the request object containing userId
+            ScheduleEventDto savedEvent = eventService.addEvent(eventRequest); 
             return new ResponseEntity<>(savedEvent, HttpStatus.CREATED);
         } catch (IllegalArgumentException e) {
             return new ResponseEntity<>(new ErrorResponse(e.getMessage()), HttpStatus.BAD_REQUEST);
@@ -43,29 +38,23 @@ public class ScheduleEventController {
         }
     }
 
-    // Removed Principal parameter
     @GetMapping("/events")
     public ResponseEntity<?> getEvents(
             @RequestParam int year, 
-            @RequestParam int month)
-            // Removed: Principal principal 
+            @RequestParam int month,
+            @RequestParam Integer userId) // Accept userId as query parameter
     {
-         // TODO: Resolve user identification. Principal was removed.
-         //       Need to either re-add authentication, pass user info in request,
-         //       or use a default user.
-        String username = null; // Placeholder - This needs to be resolved!
-        if (username == null) { 
-            // Returning error until user identification is handled
-            return new ResponseEntity<>(new ErrorResponse("User identification missing in request"), HttpStatus.UNAUTHORIZED);
+        if (userId == null) {
+             return new ResponseEntity<>(new ErrorResponse("userId parameter is required"), HttpStatus.BAD_REQUEST);
         }
-
+        
         if (month < 1 || month > 12 || year < 1900 || year > 3000) {
             return new ResponseEntity<>(new ErrorResponse("Invalid year or month parameter"), HttpStatus.BAD_REQUEST);
         }
 
         try {
-             // This call will likely fail now as username is null or needs to be obtained differently
-            List<ScheduleEventDto> events = eventService.getEventsForMonth(username, year, month); 
+            // Call service with userId from query parameter
+            List<ScheduleEventDto> events = eventService.getEventsForMonth(userId, year, month); 
             return ResponseEntity.ok(events);
         } catch (IllegalArgumentException e) {
             return new ResponseEntity<>(new ErrorResponse(e.getMessage()), HttpStatus.BAD_REQUEST);

@@ -24,12 +24,19 @@ const SchedulePage = () => {
     const fetchEventsForMonth = async (year, month) => {
         setLoading(true);
         setError(null);
-        const token = localStorage.getItem('authToken'); // Get token
+        const userId = localStorage.getItem('currentUserId'); // Get userId
+        
+        if (!userId) { // Check if userId exists
+             setError('User ID not found. Please log in again.');
+             setLoading(false);
+             return;
+        }
 
         try {
-            const response = await fetch(`/api/schedule/events?year=${year}&month=${month}`, {
+            // Add userId as query parameter
+            const response = await fetch(`/api/schedule/events?year=${year}&month=${month}&userId=${userId}`, { 
                 headers: {
-                    'Authorization': `Bearer ${token}`, // Add Authorization header
+                    // No Authorization header needed anymore
                     'Accept': 'application/json'
                 }
             });
@@ -60,20 +67,14 @@ const SchedulePage = () => {
             return;
         }
 
-        const token = localStorage.getItem('authToken');
-        
-        // Add check to ensure token exists
-        if (!token) {
-            setError('Authentication error: No token found. Please log in again.');
-            // Optionally, redirect to login here
-            // navigate('/login'); // If using router
-            // Or trigger logout: onLogout(); // If passed from App
+        const userId = localStorage.getItem('currentUserId'); // Get userId
+        if (!userId) {
+            setError('Authentication error: User ID not found. Please log in again.');
             return; 
         }
         
-        console.log("Using token for add event:", token); // Log the token being used
-
         const eventData = {
+            userId: parseInt(userId, 10), // Include parsed userId
             eventName: eventName,
             eventDate: formatDateForAPI(selectedDate),
             eventColor: eventColor
@@ -83,10 +84,10 @@ const SchedulePage = () => {
             const response = await fetch('/api/schedule/events', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    'Content-Type': 'application/json'
+                    // No Authorization header needed anymore
                 },
-                body: JSON.stringify(eventData)
+                body: JSON.stringify(eventData) // Send object including userId
             });
             
             // Check if response is JSON before parsing
@@ -113,7 +114,28 @@ const SchedulePage = () => {
         }
     };
     
-    // Filter events for the currently selected single date for display
+    // Function to render content within each calendar tile (day cell)
+    const tileContentFunc = ({ date, view }) => {
+        // Only add indicators on the month view
+        if (view === 'month') {
+            const dateStr = formatDateForAPI(date);
+            const eventsOnThisDay = events.filter(event => event.eventDate === dateStr);
+            
+            if (eventsOnThisDay.length > 0) {
+                // Use the color of the *first* event for the dot, or a default
+                const dotColor = eventsOnThisDay[0].eventColor || '#dc3545'; 
+                return (
+                    <div className="event-indicator">
+                        <span className="event-dot" style={{ backgroundColor: dotColor }}></span>
+                        <span className="event-count">{eventsOnThisDay.length}</span>
+                    </div>
+                );
+            }
+        }
+        return null; // Return null if no events or not in month view
+    };
+    
+    // Filter events for the currently selected single date for display below calendar
     const eventsForSelectedDate = events.filter(event => 
         event.eventDate === formatDateForAPI(selectedDate)
     );
@@ -131,7 +153,7 @@ const SchedulePage = () => {
                             <Calendar 
                                 onChange={handleDateChange} 
                                 value={selectedDate} 
-                                // You can add more calendar features like marking days with events
+                                tileContent={tileContentFunc} // Pass the function here
                             />
                         </Card.Body>
                     </Card>

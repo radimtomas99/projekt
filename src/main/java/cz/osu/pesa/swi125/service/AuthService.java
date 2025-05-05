@@ -74,8 +74,7 @@ public class AuthService {
              throw new RuntimeException("Login failed: Invalid username or password."); 
         }
 
-        // If username exists and password matches, return token/user info
-        // TODO: Generate a real token (e.g., JWT) instead of just user details
-        return new UserToken(user.getUsername(), user.getRole());
+        // Include userId in the returned UserToken
+        return new UserToken(user.getUserId(), user.getUsername(), user.getRole());
     }
 }

@@ -11,36 +11,40 @@ import './App.css';
 // Removed ProtectedRoute component
 
 function App() {
-    const [authToken, setAuthToken] = useState(null); // Keep auth token state
+    // Use userId state instead of authToken
+    const [currentUserId, setCurrentUserId] = useState(null); 
     // Re-introduce currentView state: 'login', 'register', 'notes', 'schedule'
     const [currentView, setCurrentView] = useState('login'); 
 
     // Check localStorage on initial load and set initial view
     useEffect(() => {
-        const storedToken = localStorage.getItem('authToken');
-        if (storedToken) {
-            setAuthToken(storedToken);
-            setCurrentView('notes'); // Start at notes if logged in
+        // Check for userId in localStorage
+        const storedUserId = localStorage.getItem('currentUserId'); 
+        if (storedUserId) {
+            setCurrentUserId(parseInt(storedUserId, 10)); // Parse userId back to integer
+            setCurrentView('notes'); 
         } else {
-            setCurrentView('login'); // Start at login if not logged in
+            setCurrentView('login'); 
         }
     }, []);
 
-    const handleLoginSuccess = (token) => {
-        localStorage.setItem('authToken', token);
-        setAuthToken(token);
-        setCurrentView('notes'); // Go to notes page after login
+    const handleLoginSuccess = (userId) => {
+        // Store userId in localStorage
+        localStorage.setItem('currentUserId', userId); 
+        setCurrentUserId(userId);
+        setCurrentView('notes'); 
     };
 
     const handleRegistrationSuccess = () => {
         alert('Registration successful! Please log in.');
-        setCurrentView('login'); // Go to login page after registration
+        setCurrentView('login'); 
     };
 
     const handleLogout = () => {
-        localStorage.removeItem('authToken');
-        setAuthToken(null);
-        setCurrentView('login'); // Go to login page after logout
+        // Remove userId from localStorage
+        localStorage.removeItem('currentUserId'); 
+        setCurrentUserId(null);
+        setCurrentView('login'); 
     };
 
     // Navigation handlers to pass to Navbar
@@ -51,8 +55,8 @@ function App() {
 
     // Render logic based on currentView
     const renderView = () => {
-        // If not logged in, only allow login/register views
-        if (!authToken) {
+        // Check currentUserId for authentication
+        if (!currentUserId) { 
             switch (currentView) {
                 case 'register':
                     return <Register onSuccess={handleRegistrationSuccess} />;
@@ -62,13 +66,13 @@ function App() {
             }
         }
 
-        // If logged in, allow notes/schedule views
+        // Pass currentUserId if needed by child components
         switch (currentView) {
             case 'schedule':
-                return <SchedulePage />;
+                return <SchedulePage /* userId={currentUserId} */ />; // Pass userId if needed
             case 'notes':
-            default: // Default to notes view when logged in
-                return <NotesPage />;
+            default: 
+                return <NotesPage /* userId={currentUserId} */ />; // Pass userId if needed
         }
     };
 
@@ -76,7 +80,7 @@ function App() {
         // Removed Router wrapper
         <>
             <NavbarComponent 
-                isLoggedIn={!!authToken} 
+                isLoggedIn={!!currentUserId} // Update isLoggedIn check
                 currentView={currentView}
                 onLogout={handleLogout}
                 onNavigateToNotes={navigateToNotes}

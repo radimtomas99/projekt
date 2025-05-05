@@ -1,54 +1,88 @@
-import React, {use, useState} from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Container, Form, Button, Card, Row, Col, Alert } from 'react-bootstrap';
 
 const Register = ({ onSuccess }) => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    const navigate = useNavigate();
+    const [error, setError] = useState('');
 
     const handleRegister = async () => {
-        const params = new URLSearchParams();
-        params.append('username', username);
-        params.append('password', password);
+        setError('');
+
+        if (username.length < 4) {
+            setError('Username must be at least 4 characters long.');
+            return;
+        }
+        if (password.length < 4) {
+            setError('Password must be at least 4 characters long.');
+            return;
+        }
 
         try {
-            const response = await fetch('http://localhost:8081/register', {
+            const response = await fetch('/api/auth/register', {
                 method: 'POST',
-                body: params
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, password })
             });
 
-            if (!response.ok) throw new Error('Registrace selhala');
-            
-            const message = await response.text();
-            console.log("Server says:", message);
+            const data = await response.json();
 
+            if (!response.ok) {
+                throw new Error(data.message || `HTTP error! status: ${response.status}`);
+            }
+
+            console.log('Backend registration successful:', data.message);
             onSuccess();
-            navigate('/notes');
-        } catch (error) {
-            console.error("Chyba při registraci:", error);
-            alert("Registrace neproběhla úspěšně. Zkuste to znovu.");
+
+        } catch (err) {
+            console.error("Registration fetch error:", err);
+            setError(err.message || 'Registration failed. Please try again later.');
         }
     };
 
-        return (
-        <div>
-            <h2>Register</h2>
-            <input
-                type="text"
-                placeholder="Username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-            />
-            <input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-            />
-            <button onClick={handleRegister}>Register</button>
-        </div>
+    return (
+        <Container className="d-flex align-items-center justify-content-center" style={{ minHeight: "100vh" }}>
+            <Row className="justify-content-center w-100">
+                <Col xs={12} md={6} lg={4}>
+                    <Card className="shadow-sm">
+                        <Card.Body>
+                            <h2 className="text-center mb-4">Create Account</h2>
+                            {error && <Alert variant="danger">{error}</Alert>}
+                            <Form onSubmit={(e) => { e.preventDefault(); handleRegister(); }}>
+                                <Form.Group className="mb-3" controlId="registerUsername">
+                                    <Form.Label>Username</Form.Label>
+                                    <Form.Control 
+                                        type="text" 
+                                        placeholder="Enter username (min 4 chars)"
+                                        value={username}
+                                        onChange={(e) => setUsername(e.target.value)}
+                                        required 
+                                        isInvalid={!!error && error.includes('Username')}
+                                    />
+                                </Form.Group>
+                                <Form.Group className="mb-3" controlId="registerPassword">
+                                    <Form.Label>Password</Form.Label>
+                                    <Form.Control 
+                                        type="password" 
+                                        placeholder="Password (min 4 chars)"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        required 
+                                        isInvalid={!!error && error.includes('Password')}
+                                    />
+                                </Form.Group>
+                                <Button variant="primary" type="submit" className="w-100 mt-3">
+                                    Register
+                                </Button>
+                            </Form>
+                        </Card.Body>
+                    </Card>
+                </Col>
+            </Row>
+        </Container>
     );
-
 };
 
 export default Register;

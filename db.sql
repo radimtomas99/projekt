@@ -38,3 +38,24 @@ ALTER TABLE public.app_user
 -- (run as postgres superuser)
 CREATE SCHEMA app AUTHORIZATION tvuj_username;
 GRANT USAGE, CREATE ON SCHEMA app TO tvuj_username;
+
+-- ==============================
+-- Schedule Event Table
+-- ==============================
+
+DROP TABLE IF EXISTS schedule_event CASCADE;
+
+CREATE TABLE schedule_event (
+    event_id SERIAL PRIMARY KEY,
+    event_date DATE NOT NULL,
+    event_name VARCHAR(200) NOT NULL,
+    event_color VARCHAR(50) NOT NULL, -- e.g., 'red', 'blue', 'green', 'yellow' or hex codes
+    user_id INTEGER NOT NULL,
+    CONSTRAINT fk_user
+        FOREIGN KEY(user_id) 
+        REFERENCES app_user(user_id)
+        ON DELETE CASCADE
+);
+
+ALTER TABLE public.schedule_event
+    OWNER TO tvuj_username;
